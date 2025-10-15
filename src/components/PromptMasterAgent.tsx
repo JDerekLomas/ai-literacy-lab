@@ -352,7 +352,7 @@ export const PromptMasterAgent: React.FC = () => {
                 <div className="mb-3">
                   <h4 className="font-medium text-green-700 mb-1">Strengths:</h4>
                   <ul className="text-sm text-green-600">
-                    {feedback.strengths.map((strength, index) => (
+                    {feedback.strengths.map((strength: string, index: number) => (
                       <li key={index}>• {strength}</li>
                     ))}
                   </ul>
@@ -363,7 +363,7 @@ export const PromptMasterAgent: React.FC = () => {
                 <div className="mb-3">
                   <h4 className="font-medium text-orange-700 mb-1">Areas for Improvement:</h4>
                   <ul className="text-sm text-orange-600">
-                    {feedback.improvements.map((improvement, index) => (
+                    {feedback.improvements.map((improvement: string, index: number) => (
                       <li key={index}>• {improvement}</li>
                     ))}
                   </ul>

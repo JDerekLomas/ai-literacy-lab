@@ -336,7 +336,7 @@ export const RealWorldApplicationAgent: React.FC = () => {
                   return (
                     <div key={key} className="flex justify-between">
                       <span>{currentScenario.knownValues.labels[key as keyof typeof currentScenario.knownValues.labels]}:</span>
-                      <span className="font-mono">{value}</span>
+                      <span className="font-mono">{typeof value === 'number' ? value : ''}</span>
                     </div>
                   );
                 })}

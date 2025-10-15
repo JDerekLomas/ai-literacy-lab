@@ -94,6 +94,7 @@ export const GeneralClient = {
   ): Promise<ClaudeAPIResponse> {
     return callClaudeAPI({
       agent: 'general',
+      method: 'chat',
       prompt,
       system,
       maxTokens,
