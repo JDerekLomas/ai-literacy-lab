@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "npm ci && npm run build"
   publish = ".next"
 
 [[plugins]]
@@ -7,16 +7,3 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--version"
-
-# Handle Next.js API routes
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# Handle client-side routing
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
