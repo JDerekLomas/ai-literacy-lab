@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { clsx } from 'clsx';
 import { PromptMasterClient } from '@/lib/api-client';
+import { useAuth } from './AuthProvider';
+import { ProgressTracker } from '@/lib/progress';
 
 interface PromptExercise {
   id: string;
@@ -25,6 +27,7 @@ interface PromptFeedback {
 }
 
 export const PromptMasterAgent: React.FC = () => {
+  const { user } = useAuth();
   const [currentExercise, setCurrentExercise] = useState<PromptExercise | null>(null);
   const [userPrompt, setUserPrompt] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
@@ -32,6 +35,7 @@ export const PromptMasterAgent: React.FC = () => {
   const [promptHistory, setPromptHistory] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState<string>('');
+  const [attempts, setAttempts] = useState<Record<string, number>>({});
 
   const exercises: PromptExercise[] = [
     {
@@ -121,6 +125,34 @@ export const PromptMasterAgent: React.FC = () => {
     }
   ];
 
+  // Load user progress when component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      loadUserProgress();
+    } else {
+      // Reset to guest state
+      setCompletedExercises([]);
+      setAttempts({});
+    }
+  }, [user]);
+
+  const loadUserProgress = async (): Promise<void> => {
+    try {
+      const completed = await ProgressTracker.getCompletedExercises();
+      setCompletedExercises(completed);
+
+      // Load attempt counts for all exercises
+      const allProgress = await ProgressTracker.getAllProgress();
+      const attemptCounts: Record<string, number> = {};
+      allProgress.forEach(progress => {
+        attemptCounts[progress.exercise_id] = progress.attempts;
+      });
+      setAttempts(attemptCounts);
+    } catch (error) {
+      console.error('Error loading user progress:', error);
+    }
+  };
+
   const analyzePrompt = useCallback(async (prompt: string, exercise: PromptExercise): Promise<PromptFeedback> => {
     try {
       const response = await PromptMasterClient.analyzePrompt(prompt, exercise.scenario);
@@ -168,13 +200,46 @@ export const PromptMasterAgent: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Increment attempts (both for guests and users)
+      const currentAttempts = (attempts[currentExercise.id] || 0) + 1;
+      setAttempts(prev => ({
+        ...prev,
+        [currentExercise.id]: currentAttempts
+      }));
+
+      // Track attempt in database if user is logged in
+      if (user) {
+        await ProgressTracker.incrementAttempts(currentExercise.id);
+      }
+
       const feedback = await analyzePrompt(userPrompt, currentExercise);
       setApiResponse(JSON.stringify(feedback));
       setShowFeedback(true);
       setPromptHistory(prev => [...prev, userPrompt]);
 
-      if (feedback.score >= 70 && !completedExercises.includes(currentExercise.id)) {
+      const isCompleted = feedback.score >= 70;
+      const wasAlreadyCompleted = completedExercises.includes(currentExercise.id);
+
+      if (isCompleted && !wasAlreadyCompleted) {
         setCompletedExercises(prev => [...prev, currentExercise.id]);
+
+        // Save progress to database if user is logged in
+        if (user) {
+          await ProgressTracker.saveProgress({
+            exerciseId: currentExercise.id,
+            completed: true,
+            score: feedback.score,
+            attempts: currentAttempts
+          });
+        }
+      } else if (user) {
+        // Update score even if not completed
+        await ProgressTracker.saveProgress({
+          exerciseId: currentExercise.id,
+          completed: false,
+          score: feedback.score,
+          attempts: currentAttempts
+        });
       }
     } catch (error) {
       console.error('Error submitting prompt:', error);
@@ -182,7 +247,7 @@ export const PromptMasterAgent: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [userPrompt, currentExercise, analyzePrompt, completedExercises]);
+  }, [userPrompt, currentExercise, analyzePrompt, completedExercises, attempts, user]);
 
   const selectExercise = useCallback((exercise: PromptExercise) => {
     setCurrentExercise(exercise);
@@ -193,43 +258,68 @@ export const PromptMasterAgent: React.FC = () => {
   }, []);
 
   const renderExerciseList = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {exercises.map((exercise) => (
-        <div
-          key={exercise.id}
-          className={clsx(
-            "p-6 rounded-lg border-2 cursor-pointer transition-all hover:shadow-lg",
-            completedExercises.includes(exercise.id)
-              ? "border-green-300 bg-green-50"
-              : "border-gray-300 bg-white hover:border-blue-400"
-          )}
-          onClick={() => selectExercise(exercise)}
-        >
-          <div className="flex justify-between items-start mb-3">
-            <h3 className="text-lg font-semibold text-gray-800">
-              {exercise.title}
-            </h3>
-            <div className="flex items-center gap-2">
-              {completedExercises.includes(exercise.id) && (
-                <span className="text-green-600 text-xl">✓</span>
-              )}
-              <span className={clsx(
-                "px-2 py-1 text-xs rounded",
-                exercise.difficulty === 1 && "bg-green-100 text-green-700",
-                exercise.difficulty === 2 && "bg-yellow-100 text-yellow-700",
-                exercise.difficulty === 3 && "bg-red-100 text-red-700"
-              )}>
-                Level {exercise.difficulty}
-              </span>
-            </div>
-          </div>
-
-          <p className="text-gray-600 mb-3">{exercise.scenario}</p>
-          <p className="text-sm text-blue-600 font-medium">
-            Goal: {exercise.goal}
+    <div className="space-y-6">
+      {!user && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <p className="text-blue-800 mb-2">
+            <strong>Sign in to track your progress!</strong>
+          </p>
+          <p className="text-blue-600 text-sm">
+            Guest mode: Your progress won't be saved between sessions.
           </p>
         </div>
-      ))}
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {exercises.map((exercise) => {
+          const attemptCount = attempts[exercise.id] || 0;
+          const isCompleted = completedExercises.includes(exercise.id);
+
+          return (
+            <div
+              key={exercise.id}
+              className={clsx(
+                "p-6 rounded-lg border-2 cursor-pointer transition-all hover:shadow-lg",
+                isCompleted
+                  ? "border-green-300 bg-green-50"
+                  : "border-gray-300 bg-white hover:border-blue-400"
+              )}
+              onClick={() => selectExercise(exercise)}
+            >
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {exercise.title}
+                </h3>
+                <div className="flex items-center gap-2">
+                  {isCompleted && (
+                    <span className="text-green-600 text-xl">✓</span>
+                  )}
+                  <span className={clsx(
+                    "px-2 py-1 text-xs rounded",
+                    exercise.difficulty === 1 && "bg-green-100 text-green-700",
+                    exercise.difficulty === 2 && "bg-yellow-100 text-yellow-700",
+                    exercise.difficulty === 3 && "bg-red-100 text-red-700"
+                  )}>
+                    Level {exercise.difficulty}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-gray-600 mb-3">{exercise.scenario}</p>
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-blue-600 font-medium">
+                  Goal: {exercise.goal}
+                </p>
+                {attemptCount > 0 && (
+                  <span className="text-xs text-gray-500">
+                    {attemptCount} attempt{attemptCount !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 
