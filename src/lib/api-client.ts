@@ -1,4 +1,4 @@
-interface ClaudeAPIResponse {
+export interface ClaudeAPIResponse {
   content: string;
   usage?: {
     input_tokens: number;
