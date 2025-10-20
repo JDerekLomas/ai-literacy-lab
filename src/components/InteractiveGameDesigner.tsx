@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { callClaudeAPI, ClaudeAPIResponse } from '@/lib/api-client';
 
 interface GameExercise {
@@ -26,11 +26,6 @@ interface PromptFeedback {
   revisedPrompt: string;
 }
 
-interface GeneratedGame {
-  html: string;
-  explanation: string;
-}
-
 const InteractiveGameDesigner: React.FC = () => {
   const [currentExercise, setCurrentExercise] = useState<GameExercise | null>(null);
   const [userPrompt, setUserPrompt] = useState('');
@@ -42,132 +37,147 @@ const InteractiveGameDesigner: React.FC = () => {
   const [showExamplePrompt, setShowExamplePrompt] = useState(false);
   const [codeEditable, setCodeEditable] = useState(false);
   const [editedCode, setEditedCode] = useState('');
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const exercises: GameExercise[] = [
     {
       id: 'clicker-game',
-      title: 'Simple Clicker Game',
+      title: 'React Clicker Game',
       phase: 'Foundation',
-      scenario: 'A user wants to create their first interactive game - a simple clicker that counts button presses and celebrates milestones.',
-      learningObjective: 'Learn to write clear, specific prompts that define basic game mechanics, user interactions, and visual feedback.',
+      scenario: 'Create your first React game - a simple clicker that counts button presses and celebrates milestones with animations.',
+      learningObjective: 'Learn to write prompts that describe React components with state management and interactive UI elements.',
       promptingTips: [
-        'Clearly describe the main interaction (what happens when user clicks)',
-        'Specify visual elements (buttons, counters, colors)',
-        'Define any special behaviors (milestones, animations, sounds)',
-        'Mention the overall layout and styling preferences'
+        'Describe the React component with useState for tracking score',
+        'Specify visual elements and their styling (buttons, counters, animations)',
+        'Define milestone behaviors and conditional rendering',
+        'Request modern React patterns (hooks, functional components)'
       ],
-      examplePrompt: 'Create a clicker game where users click a large colorful button to earn points. Display the current score prominently. When the user reaches milestones (10, 50, 100 clicks), show celebratory messages with different colors. Use a fun, playful design with bright colors and rounded corners.',
+      examplePrompt: 'Create a React clicker game component where users click a large animated button to earn points. Use useState to track the score. Display the current score prominently with animated number changes. When reaching milestones (10, 50, 100 clicks), show celebratory messages with fade-in animations and confetti effects. Style with Tailwind CSS using bright gradients and smooth transitions.',
       successCriteria: [
-        'Game displays a clickable button',
-        'Score counter updates with each click',
-        'Visual feedback on milestones',
-        'Clean, attractive layout'
+        'React functional component with hooks',
+        'State management for score',
+        'Click handler updates state',
+        'Conditional rendering for milestones',
+        'Smooth animations and transitions'
       ],
       difficulty: 1
     },
     {
-      id: 'guess-number',
-      title: 'Guess the Number',
+      id: 'todo-game',
+      title: 'Quest Tracker Game',
       phase: 'Foundation',
-      scenario: 'Create a classic guessing game where the computer picks a random number and gives hints to help the player find it.',
-      learningObjective: 'Practice describing game rules, win/lose conditions, and feedback mechanisms in your prompts.',
+      scenario: 'Build a gamified todo list where completing tasks earns points and unlocks achievements.',
+      learningObjective: 'Learn to describe complex React state with arrays, objects, and multiple interactions.',
       promptingTips: [
-        'Explain the game rules clearly (range, number of guesses)',
-        'Describe the hint system (higher/lower feedback)',
-        'Define win and lose conditions',
-        'Specify how the game resets or restarts',
-        'Request user-friendly error handling'
+        'Describe state shape (array of tasks with properties)',
+        'Explain CRUD operations (add, complete, delete tasks)',
+        'Define point system and achievement logic',
+        'Request proper React patterns (map, key props, event handlers)'
       ],
-      examplePrompt: 'Build a number guessing game where the computer randomly picks a number between 1 and 100. The player has 10 guesses to find it. After each guess, tell them if their guess was too high or too low. Show the number of remaining guesses. When they win, display a congratulations message. If they run out of guesses, reveal the number and offer to play again. Use a clean interface with a number input field and a submit button.',
+      examplePrompt: 'Create a Quest Tracker game in React. Users can add quest items, mark them complete (with strikethrough and celebration), and earn 10 points per quest. Display total points with an animated counter. Show achievement badges when reaching 50, 100, 200 points. Each quest has a text input to add, a checkbox to complete, and delete button. Style with modern UI - use card layouts, progress bars, and badge icons.',
       successCriteria: [
-        'Random number generation',
-        'Input validation',
-        'Higher/lower hints',
-        'Win/lose detection',
-        'Restart functionality'
+        'Array state for tasks',
+        'Add/remove/complete functionality',
+        'Point calculation system',
+        'Achievement unlocking logic',
+        'Clean component structure'
       ],
       difficulty: 1
     },
     {
       id: 'memory-cards',
-      title: 'Memory Card Game',
+      title: 'React Memory Match',
       phase: 'Design',
-      scenario: 'Design a memory matching game that tests players\' ability to remember card positions.',
-      learningObjective: 'Learn to describe complex game states, animations, and multi-step interactions in prompts.',
+      scenario: 'Design a memory card game with flip animations and match detection using React state.',
+      learningObjective: 'Master describing complex game state with multiple variables, timing logic, and conditional effects.',
       promptingTips: [
-        'Describe the game grid layout (e.g., 4x4 cards)',
-        'Explain the card flipping interaction',
-        'Detail the matching logic and timing',
-        'Request visual transitions and animations',
-        'Specify scoring or move counting',
-        'Define the win condition'
+        'Describe card array structure (id, value, flipped, matched)',
+        'Explain flip logic with useEffect for timing',
+        'Detail matching algorithm with two-card comparison',
+        'Request CSS transitions for card flips',
+        'Specify win condition detection'
       ],
-      examplePrompt: 'Create a memory card game with a 4x4 grid (8 pairs). Each card should have a colorful emoji on one side and a question mark on the back. When a player clicks a card, it flips to reveal the emoji. If two flipped cards match, they stay revealed. If they don\'t match, they flip back after 1 second. Track the number of moves. When all pairs are found, show a victory message with the total moves. Cards should flip with a smooth animation. Use a modern, minimal design.',
+      examplePrompt: 'Build a Memory Match game in React with a 4x4 grid of cards. Each card has an emoji and flips when clicked. Use useState for cards array (tracking flipped/matched status) and selected cards. When two cards are flipped, check if they match after 1 second - if yes, mark as matched; if no, flip them back. Add flip animations with CSS transforms. Track moves and show victory message when all matched. Style with 3D card flip effects and colorful design.',
       successCriteria: [
-        'Grid of cards rendered',
-        'Card flip animation',
-        'Match detection logic',
-        'Non-matching cards flip back',
-        'Move counter',
-        'Win detection'
+        'Grid layout with card components',
+        'Flip animation on click',
+        'Two-card selection logic',
+        'Match detection with timing',
+        'Win condition and stats display'
       ],
       difficulty: 2
     },
     {
-      id: 'snake-game',
-      title: 'Classic Snake Game',
-      phase: 'Implementation',
-      scenario: 'Build the classic Snake game where the player controls a growing snake that must eat food while avoiding walls and its own tail.',
-      learningObjective: 'Master describing complex game mechanics, continuous movement, collision detection, and keyboard controls.',
+      id: 'reaction-game',
+      title: 'Reaction Time Tester',
+      phase: 'Design',
+      scenario: 'Create a reaction speed game that tests how quickly players can click when colors change.',
+      learningObjective: 'Learn to describe timing mechanics, random events, and performance measurement in React.',
       promptingTips: [
-        'Describe the game canvas/grid system',
-        'Explain snake movement and keyboard controls',
-        'Detail food spawning mechanics',
-        'Describe growth and scoring behavior',
-        'Specify collision detection (walls, self)',
-        'Request appropriate game speed and difficulty',
-        'Ask for pause/restart functionality'
+        'Describe game states (waiting, ready, testing, results)',
+        'Explain setTimeout/useEffect for timing logic',
+        'Detail random delay before color change',
+        'Request timestamp tracking for reaction calculation',
+        'Specify too-early detection (false start)'
       ],
-      examplePrompt: 'Create a Snake game on a 20x20 grid canvas. The snake starts as 3 segments and moves continuously in the direction set by arrow keys. Place food (a red square) at random positions. When the snake eats food, it grows by one segment and the score increases. The game ends if the snake hits the wall or its own body. Display the current score prominently. Add a start/restart button and show game over message. Use a dark background with bright colors for the snake and food. Snake should move at a moderate speed (not too fast).',
+      examplePrompt: 'Create a Reaction Time game in React. Show a box that changes from red to green after a random delay (2-5 seconds). User clicks when it turns green. Measure and display their reaction time in milliseconds. If they click while red, show "Too early! Wait for green" and restart. Track best time and average over 5 rounds. Use large colored boxes, clear instructions, and animated feedback. Show a leaderboard of attempts.',
       successCriteria: [
-        'Snake moves continuously',
-        'Arrow key controls work',
-        'Food appears randomly',
-        'Snake grows when eating',
-        'Collision detection (walls and self)',
-        'Score tracking',
-        'Game over state',
-        'Restart functionality'
+        'Multiple game states managed',
+        'Random delay implementation',
+        'Accurate time measurement',
+        'False start detection',
+        'Statistics tracking'
+      ],
+      difficulty: 2
+    },
+    {
+      id: 'typing-game',
+      title: 'Speed Typing Challenge',
+      phase: 'Implementation',
+      scenario: 'Build a typing speed game where players race against the clock to type words accurately.',
+      learningObjective: 'Master describing real-time input validation, timer logic, and performance metrics in React.',
+      promptingTips: [
+        'Describe word/sentence generation system',
+        'Explain character-by-character validation',
+        'Detail timer implementation with countdown',
+        'Request WPM (words per minute) calculation',
+        'Specify visual feedback (correct/incorrect highlighting)',
+        'Ask for accuracy percentage tracking'
+      ],
+      examplePrompt: 'Create a Speed Typing game in React. Display a random sentence that user must type. As they type, highlight correct letters in green and errors in red in real-time. Start a 60-second countdown timer when they begin typing. Calculate and display WPM (words per minute) and accuracy percentage. Show a new random sentence when completed. Track high scores. Style with a clean typing interface - monospace font, large text, progress bar for timer, and stats dashboard.',
+      successCriteria: [
+        'Real-time input validation',
+        'Character highlighting system',
+        'Countdown timer',
+        'WPM calculation',
+        'Accuracy tracking',
+        'High score persistence'
       ],
       difficulty: 3
     },
     {
-      id: 'breakout-game',
-      title: 'Breakout/Brick Breaker',
+      id: 'quiz-game',
+      title: 'Interactive Quiz Game',
       phase: 'Implementation',
-      scenario: 'Create a Breakout-style game where the player uses a paddle to bounce a ball and break bricks.',
-      learningObjective: 'Learn to describe physics-based game mechanics, real-time interactions, and level design through detailed prompts.',
+      scenario: 'Design a multi-question quiz game with scoring, timer, and answer feedback.',
+      learningObjective: 'Learn to structure complex React apps with multiple views, navigation, and data flow.',
       promptingTips: [
-        'Describe the game layout (paddle, ball, bricks)',
-        'Explain ball physics and bouncing behavior',
-        'Detail paddle controls (mouse or keyboard)',
-        'Describe brick breaking mechanics',
-        'Specify win/lose conditions',
-        'Request lives or health system',
-        'Ask for visual effects on brick breaks',
-        'Mention score calculation'
+        'Describe quiz data structure (questions, answers, correct answer)',
+        'Explain navigation between questions',
+        'Detail answer selection and validation',
+        'Request score calculation with bonus for speed',
+        'Specify progress indicators',
+        'Ask for results screen with performance breakdown'
       ],
-      examplePrompt: 'Build a Breakout game with a paddle at the bottom controlled by mouse movement. A ball bounces around, destroying colorful bricks arranged in 5 rows at the top. The ball bounces off the paddle, walls, and bricks. When a brick is hit, it disappears and the score increases. The player has 3 lives - they lose a life if the ball falls below the paddle. The game is won when all bricks are destroyed. Show score and remaining lives. Add visual effects when bricks break. Use vibrant colors for different brick rows and a smooth ball movement.',
+      examplePrompt: 'Build a Quiz Game in React with 5 multiple-choice questions. Show one question at a time with 4 answer buttons. When user selects an answer, highlight correct (green) and incorrect (red) before moving to next question after 2 seconds. Include a 20-second timer per question - earn bonus points for fast answers. Track total score (10 points base + time bonus). Show progress bar of questions completed. At the end, display results with score, time taken, and percentage. Allow restart. Use vibrant UI with animations for feedback.',
       successCriteria: [
-        'Paddle movement (mouse or keyboard)',
-        'Ball physics and bouncing',
-        'Brick collision and destruction',
-        'Wall collision',
-        'Lives system',
-        'Score calculation',
-        'Win/lose detection',
-        'Visual feedback',
-        'Smooth animations'
+        'Question navigation system',
+        'Answer validation',
+        'Per-question timer',
+        'Score with time bonus',
+        'Progress tracking',
+        'Results summary screen',
+        'Smooth transitions'
       ],
       difficulty: 3
     }
@@ -184,6 +194,51 @@ const InteractiveGameDesigner: React.FC = () => {
     setCodeEditable(false);
   };
 
+  const generateReactSandbox = (reactCode: string): string => {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React Game</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #root {
+      width: 100%;
+      max-width: 800px;
+    }
+    * {
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    ${reactCode}
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<Game />);
+  </script>
+</body>
+</html>`;
+  };
+
   const generateGame = async () => {
     if (!userPrompt.trim() || !currentExercise) return;
 
@@ -192,24 +247,31 @@ const InteractiveGameDesigner: React.FC = () => {
     setGameExplanation('');
 
     try {
-      const systemPrompt = `You are an expert game developer. Generate a complete, self-contained HTML file for a simple browser game based on the user's prompt.
+      const systemPrompt = `You are an expert React game developer. Generate a React component based on the user's prompt.
 
 Requirements:
-- Create a SINGLE HTML file with embedded CSS and JavaScript
-- The game must be fully functional and playable
-- Use vanilla JavaScript (no external libraries)
-- Include clear, commented code
-- Make it visually appealing with good UI/UX
-- Ensure the game works without any external resources
-- Use modern HTML5, CSS3, and ES6+ JavaScript
+- Create a functional React component called "Game"
+- Use React hooks (useState, useEffect, etc.) for state management
+- Write modern, clean React code with proper patterns
+- Use Tailwind CSS classes for styling
+- Make it fully interactive and visually appealing
+- Include animations and smooth transitions
+- Ensure the game works completely without external dependencies
+- Use emojis for visual elements when appropriate
 
-Context: This is a learning exercise about "${currentExercise.title}". The user is learning to write prompts for AI code generation.
+Context: This is a learning exercise about "${currentExercise.title}". The user is learning to write prompts for AI-generated React code.
 
-Return your response in this JSON format:
-{
-  "html": "<!DOCTYPE html>...",
-  "explanation": "Brief explanation of how the game works and what features were implemented"
-}`;
+IMPORTANT: Return ONLY the React component code (the Game component function). Do NOT include imports, HTML structure, or explanations in the code. Just the component function.
+
+Then, after the code block, provide a brief explanation in this format:
+
+\`\`\`jsx
+function Game() {
+  // Your React component code here
+}
+\`\`\`
+
+EXPLANATION: [Brief explanation of how it works]`;
 
       const response: ClaudeAPIResponse = await callClaudeAPI({
         agent: 'general',
@@ -218,22 +280,30 @@ Return your response in this JSON format:
         systemPrompt
       });
 
-      // Try to parse as JSON first
-      try {
-        const parsed = JSON.parse(response.content);
-        setGeneratedCode(parsed.html);
-        setEditedCode(parsed.html);
-        setGameExplanation(parsed.explanation);
-      } catch {
-        // If not JSON, treat entire response as HTML
-        const content = response.content;
-        if (content.includes('<!DOCTYPE html>') || content.includes('<html>')) {
-          setGeneratedCode(content);
-          setEditedCode(content);
-          setGameExplanation('Game generated successfully. Play it in the preview window!');
+      // Extract code and explanation
+      const content = response.content;
+      const codeMatch = content.match(/```(?:jsx|javascript|js)?\n([\s\S]*?)```/);
+
+      if (codeMatch) {
+        const code = codeMatch[1].trim();
+        setGeneratedCode(code);
+        setEditedCode(code);
+
+        // Extract explanation after the code block
+        const afterCode = content.substring(content.indexOf(codeMatch[0]) + codeMatch[0].length);
+        const explanationMatch = afterCode.match(/EXPLANATION:\s*([\s\S]*?)(?:\n\n|$)/i) ||
+                                 afterCode.match(/How it works:?\s*([\s\S]*?)(?:\n\n|$)/i);
+
+        if (explanationMatch) {
+          setGameExplanation(explanationMatch[1].trim());
         } else {
-          throw new Error('Generated content does not appear to be valid HTML');
+          setGameExplanation('Game generated successfully! Try it out in the preview window.');
         }
+      } else {
+        // No code block found, treat entire response as code
+        setGeneratedCode(content);
+        setEditedCode(content);
+        setGameExplanation('Game generated successfully! Try it out in the preview window.');
       }
     } catch (error) {
       console.error('Error generating game:', error);
@@ -250,7 +320,7 @@ Return your response in this JSON format:
     setFeedback(null);
 
     try {
-      const systemPrompt = `You are an expert prompt engineering instructor. Analyze the user's prompt for creating a "${currentExercise.title}" game.
+      const systemPrompt = `You are an expert prompt engineering instructor. Analyze the user's prompt for creating a "${currentExercise.title}" React game.
 
 Learning Objective: ${currentExercise.learningObjective}
 
@@ -261,10 +331,10 @@ Prompting Tips:
 ${currentExercise.promptingTips.map(t => `- ${t}`).join('\n')}
 
 Evaluate the prompt on:
-1. Clarity (0-100): Is it easy to understand what game should be created?
-2. Specificity (0-100): Does it include specific details about mechanics, visuals, interactions?
-3. Completeness (0-100): Does it cover all necessary game elements?
-4. Creativity (0-100): Does it include interesting features or polish?
+1. Clarity (0-100): Is it easy to understand what React game should be created?
+2. Specificity (0-100): Does it include specific details about React patterns, state, interactions, styling?
+3. Completeness (0-100): Does it cover all necessary game elements and React implementation details?
+4. Creativity (0-100): Does it include interesting features, animations, or polish?
 
 Return your response in this JSON format:
 {
@@ -275,7 +345,7 @@ Return your response in this JSON format:
   "creativity": <score 0-100>,
   "strengths": ["strength 1", "strength 2"],
   "improvements": ["suggestion 1", "suggestion 2"],
-  "revisedPrompt": "An improved version of their prompt incorporating your suggestions"
+  "revisedPrompt": "An improved version of their prompt incorporating your suggestions, written for generating a React component"
 }`;
 
       const response: ClaudeAPIResponse = await callClaudeAPI({
@@ -299,6 +369,20 @@ Return your response in this JSON format:
     setGeneratedCode(editedCode);
   };
 
+  // Update iframe when code changes
+  useEffect(() => {
+    if (generatedCode && iframeRef.current) {
+      const sandboxHtml = generateReactSandbox(generatedCode);
+      const iframe = iframeRef.current;
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (doc) {
+        doc.open();
+        doc.write(sandboxHtml);
+        doc.close();
+      }
+    }
+  }, [generatedCode]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
@@ -312,8 +396,13 @@ Return your response in this JSON format:
               <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 Interactive Game Designer
               </h1>
-              <p className="text-gray-600 mt-1">Learn prompt engineering by creating games with AI</p>
+              <p className="text-gray-600 mt-1">Learn prompt engineering by creating React games with AI</p>
             </div>
+          </div>
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+            <p className="text-blue-900 text-sm">
+              <strong>✨ React-Powered!</strong> This module generates real React components that run live in your browser - just like Claude artifacts!
+            </p>
           </div>
         </div>
       </div>
@@ -323,10 +412,10 @@ Return your response in this JSON format:
         {!currentExercise ? (
           <div>
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose a Game to Create</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose a React Game to Create</h2>
               <p className="text-gray-600">
-                Each exercise teaches you how to write effective prompts for AI code generation.
-                Start with simple games and work your way up!
+                Each exercise teaches you how to write effective prompts for AI-generated React games.
+                Start with simple interactions and build up to complex game mechanics!
               </p>
             </div>
 
@@ -441,7 +530,7 @@ Return your response in this JSON format:
                   <textarea
                     value={userPrompt}
                     onChange={(e) => setUserPrompt(e.target.value)}
-                    placeholder="Write your prompt here... Be specific about game mechanics, visuals, and interactions!"
+                    placeholder="Write your prompt here... Be specific about React components, state management, interactions, and styling!"
                     className="w-full h-64 p-4 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all resize-none font-mono text-sm"
                   />
                   <div className="flex gap-3 mt-4">
@@ -450,7 +539,7 @@ Return your response in this JSON format:
                       disabled={!userPrompt.trim() || isGenerating}
                       className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
                     >
-                      {isGenerating ? 'Generating Game...' : '🎮 Generate Game'}
+                      {isGenerating ? 'Generating React Game...' : '⚛️ Generate React Game'}
                     </button>
                     <button
                       onClick={analyzePrompt}
@@ -542,7 +631,7 @@ Return your response in this JSON format:
                   <>
                     <div className="bg-white rounded-xl shadow-lg p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-bold text-gray-900">Game Preview</h3>
+                        <h3 className="text-xl font-bold text-gray-900">⚛️ React Game Preview</h3>
                         <button
                           onClick={() => setCodeEditable(!codeEditable)}
                           className="text-purple-600 hover:text-purple-700 font-semibold text-sm"
@@ -554,10 +643,10 @@ Return your response in this JSON format:
                       {!codeEditable ? (
                         <div className="border-4 border-gray-200 rounded-lg overflow-hidden bg-white shadow-inner">
                           <iframe
-                            srcDoc={generatedCode}
+                            ref={iframeRef}
                             className="w-full h-[600px]"
                             sandbox="allow-scripts"
-                            title="Game Preview"
+                            title="React Game Preview"
                           />
                         </div>
                       ) : (
@@ -566,6 +655,7 @@ Return your response in this JSON format:
                             value={editedCode}
                             onChange={(e) => setEditedCode(e.target.value)}
                             className="w-full h-[500px] p-4 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all resize-none font-mono text-xs"
+                            spellCheck={false}
                           />
                           <button
                             onClick={updatePreview}
@@ -588,11 +678,14 @@ Return your response in this JSON format:
 
                 {!generatedCode && (
                   <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-                    <div className="text-6xl mb-4">🎮</div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">No Game Yet</h3>
+                    <div className="text-6xl mb-4">⚛️</div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">No React Game Yet</h3>
                     <p className="text-gray-600">
-                      Write a prompt and click "Generate Game" to see your creation come to life!
+                      Write a prompt and click "Generate React Game" to see your creation come to life!
                     </p>
+                    <div className="mt-4 text-sm text-gray-500">
+                      Your game will run using React + Tailwind CSS
+                    </div>
                   </div>
                 )}
               </div>
