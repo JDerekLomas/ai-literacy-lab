@@ -7,8 +7,9 @@ import LearningAgentDesigner from './LearningAgentDesigner';
 import ConnectionAgentDesigner from './ConnectionAgentDesigner';
 import PurposeAgentDesigner from './PurposeAgentDesigner';
 import MultiModelAgentDesigner from './MultiModelAgentDesigner';
+import InteractiveGameDesigner from './InteractiveGameDesigner';
 
-type AgentTrack = 'overview' | 'wellbeing' | 'learning' | 'connection' | 'purpose' | 'multimodel';
+type AgentTrack = 'overview' | 'wellbeing' | 'learning' | 'connection' | 'purpose' | 'multimodel' | 'gamedesigner';
 
 interface DesignProgress {
   wellbeingAgents: number;
@@ -16,6 +17,7 @@ interface DesignProgress {
   connectionAgents: number;
   purposeAgents: number;
   multiModelSkills: number;
+  gameDesignerSkills: number;
   overallFlourishingDesign: number;
 }
 
@@ -40,6 +42,7 @@ const AgentDesignAcademy: React.FC = () => {
     connectionAgents: 0,
     purposeAgents: 0,
     multiModelSkills: 0,
+    gameDesignerSkills: 0,
     overallFlourishingDesign: 0
   });
 
@@ -202,6 +205,38 @@ const AgentDesignAcademy: React.FC = () => {
         'Transparent cost structures',
         'Avoiding vendor lock-in',
         'Environmental impact of model choices'
+      ]
+    },
+    {
+      id: 'gamedesigner',
+      title: 'Interactive Game Designer',
+      description: 'Learn prompt engineering fundamentals by creating simple browser games with AI. Master the art of writing clear, specific prompts that generate functional, playable code.',
+      icon: '🎮',
+      researchBase: [
+        'Prompt Engineering Principles',
+        'Game Design Fundamentals',
+        'Interactive Learning Theory',
+        'Creative AI Collaboration'
+      ],
+      designSkills: [
+        'Writing clear and specific prompts',
+        'Describing game mechanics effectively',
+        'Iterating on AI-generated code',
+        'Understanding code structure and logic'
+      ],
+      flourishingOutcomes: [
+        'Develop prompt engineering expertise',
+        'Build creative confidence with AI tools',
+        'Learn programming concepts through play',
+        'Create shareable interactive experiences'
+      ],
+      timeEstimate: '2-4 weeks',
+      difficulty: 'Foundation',
+      ethicalFocus: [
+        'Understanding AI capabilities and limitations',
+        'Responsible use of generative AI',
+        'Attribution and transparency',
+        'Avoiding harmful or addictive game mechanics'
       ]
     }
   ];
@@ -386,6 +421,8 @@ const AgentDesignAcademy: React.FC = () => {
         return <PurposeAgentDesigner />;
       case 'multimodel':
         return <MultiModelAgentDesigner />;
+      case 'gamedesigner':
+        return <InteractiveGameDesigner />;
       default:
         return renderOverview();
     }
