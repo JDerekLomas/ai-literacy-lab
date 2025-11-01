@@ -8,8 +8,9 @@ import ConnectionAgentDesigner from './ConnectionAgentDesigner';
 import PurposeAgentDesigner from './PurposeAgentDesigner';
 import MultiModelAgentDesigner from './MultiModelAgentDesigner';
 import InteractiveGameDesigner from './InteractiveGameDesigner';
+import BookReader from './BookReader';
 
-type AgentTrack = 'overview' | 'wellbeing' | 'learning' | 'connection' | 'purpose' | 'multimodel' | 'gamedesigner';
+type AgentTrack = 'overview' | 'wellbeing' | 'learning' | 'connection' | 'purpose' | 'multimodel' | 'gamedesigner' | 'bookreader';
 
 interface DesignProgress {
   wellbeingAgents: number;
@@ -238,6 +239,38 @@ const AgentDesignAcademy: React.FC = () => {
         'Attribution and transparency',
         'Avoiding harmful or addictive game mechanics'
       ]
+    },
+    {
+      id: 'bookreader',
+      title: 'AI Usage Wisdom for Designers',
+      description: 'A comprehensive guide to working effectively with AI for human-centered design practice. Learn the mental models you need for human-AI collaboration.',
+      icon: '📖',
+      researchBase: [
+        'LLM Architecture Understanding',
+        'Human-AI Interaction Research',
+        'Cognitive Science Principles',
+        'Design Education Methodologies'
+      ],
+      designSkills: [
+        'Understanding AI behavior patterns',
+        'Effective prompt engineering',
+        'Critical evaluation of AI outputs',
+        'Bias detection and mitigation'
+      ],
+      flourishingOutcomes: [
+        'Work more effectively with AI tools',
+        'Avoid common AI pitfalls',
+        'Maintain design judgment and expertise',
+        'Adapt to evolving AI capabilities'
+      ],
+      timeEstimate: '2-3 hours',
+      difficulty: 'Foundation',
+      ethicalFocus: [
+        'Understanding bias in AI systems',
+        'Maintaining human agency in design',
+        'Critical thinking about AI outputs',
+        'Ethical use of AI in design practice'
+      ]
     }
   ];
 
@@ -423,6 +456,8 @@ const AgentDesignAcademy: React.FC = () => {
         return <MultiModelAgentDesigner />;
       case 'gamedesigner':
         return <InteractiveGameDesigner />;
+      case 'bookreader':
+        return <BookReader />;
       default:
         return renderOverview();
     }
