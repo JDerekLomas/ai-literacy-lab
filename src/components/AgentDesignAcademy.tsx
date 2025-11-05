@@ -8,8 +8,17 @@ import ConnectionAgentDesigner from './ConnectionAgentDesigner';
 import PurposeAgentDesigner from './PurposeAgentDesigner';
 import MultiModelAgentDesigner from './MultiModelAgentDesigner';
 import InteractiveGameDesigner from './InteractiveGameDesigner';
+import CoolVibeCodingLab from './CoolVibeCodingLab';
 
-type AgentTrack = 'overview' | 'wellbeing' | 'learning' | 'connection' | 'purpose' | 'multimodel' | 'gamedesigner';
+type AgentTrack =
+  | 'overview'
+  | 'wellbeing'
+  | 'learning'
+  | 'connection'
+  | 'purpose'
+  | 'multimodel'
+  | 'gamedesigner'
+  | 'coolvibes';
 
 interface DesignProgress {
   wellbeingAgents: number;
@@ -18,6 +27,7 @@ interface DesignProgress {
   purposeAgents: number;
   multiModelSkills: number;
   gameDesignerSkills: number;
+  coolVibeStudios: number;
   overallFlourishingDesign: number;
 }
 
@@ -43,6 +53,7 @@ const AgentDesignAcademy: React.FC = () => {
     purposeAgents: 0,
     multiModelSkills: 0,
     gameDesignerSkills: 0,
+    coolVibeStudios: 0,
     overallFlourishingDesign: 0
   });
 
@@ -238,6 +249,39 @@ const AgentDesignAcademy: React.FC = () => {
         'Attribution and transparency',
         'Avoiding harmful or addictive game mechanics'
       ]
+    },
+    {
+      id: 'coolvibes',
+      title: 'Cool Vibe Coding Lab',
+      description:
+        'Curate immersive creative coding sessions that blend sonic moodboards, collaborative rituals, and AI-assisted prototyping flows.',
+      icon: '🎧',
+      researchBase: [
+        'Creative Flow Research',
+        'Collaborative Learning Studios',
+        'Multisensory Experience Design',
+        'Playful Technology Pedagogy'
+      ],
+      designSkills: [
+        'Designing multisensory creative environments',
+        'Prompt composing for expressive build sessions',
+        'Facilitating collaborative prototyping rituals',
+        'Integrating wellbeing rhythms into product work'
+      ],
+      flourishingOutcomes: [
+        'Sustained creative confidence',
+        'Deeper team connection through shared rituals',
+        'Balanced focus and rest cycles',
+        'Joyful experimentation with AI partners'
+      ],
+      timeEstimate: '3-5 weeks',
+      difficulty: 'Foundation',
+      ethicalFocus: [
+        'Respecting diverse creative expressions',
+        'Maintaining psychological safety in collaboration',
+        'Ensuring inclusive sensory design',
+        'Avoiding hustle culture dynamics'
+      ]
     }
   ];
 
@@ -423,6 +467,8 @@ const AgentDesignAcademy: React.FC = () => {
         return <MultiModelAgentDesigner />;
       case 'gamedesigner':
         return <InteractiveGameDesigner />;
+      case 'coolvibes':
+        return <CoolVibeCodingLab />;
       default:
         return renderOverview();
     }
