@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { AuthProvider } from '@/components/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'AI Literacy Learning Lab',
-  description: 'Master AI literacy through hands-on practice with conversational agents. Learn prompt engineering, goal achievement, creative collaboration, and productivity workflows to use AI effectively for human flourishing.',
+  title: 'Claude - AI Assistant',
+  description: 'Chat with Claude, an AI assistant created by Anthropic',
 };
 
 export default function RootLayout({
@@ -14,11 +13,7 @@ export default function RootLayout({
 }): React.ReactElement {
   return (
     <html lang="en">
-      <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
