@@ -45,14 +45,36 @@ export function ClaudeUI() {
   const [pendingAchievements, setPendingAchievements] = useState<Achievement[]>([]);
   const [showAchievementsPanel, setShowAchievementsPanel] = useState(false);
 
-  // Load progress from localStorage
+  // Load progress and conversations from localStorage
   useEffect(() => {
+    // Load achievement progress
     const saved = localStorage.getItem('ai-literacy-progress');
     const tracker = saved
       ? AchievementTracker.loadProgress(saved)
       : new AchievementTracker();
     setAchievementTracker(tracker);
     setUserProgress(tracker.getProgress());
+
+    // Load conversations
+    const savedConversations = localStorage.getItem('claude-conversations');
+    if (savedConversations) {
+      try {
+        const parsed = JSON.parse(savedConversations);
+        // Restore Date objects
+        const restored = parsed.map((c: Conversation) => ({
+          ...c,
+          createdAt: new Date(c.createdAt),
+          updatedAt: new Date(c.updatedAt),
+          messages: c.messages.map(m => ({
+            ...m,
+            timestamp: new Date(m.timestamp),
+          })),
+        }));
+        setConversations(restored);
+      } catch (error) {
+        console.error('Failed to load conversations:', error);
+      }
+    }
   }, []);
 
   // Save progress to localStorage
@@ -61,6 +83,13 @@ export function ClaudeUI() {
       localStorage.setItem('ai-literacy-progress', achievementTracker.saveProgress());
     }
   }, [userProgress]);
+
+  // Save conversations to localStorage
+  useEffect(() => {
+    if (conversations.length > 0) {
+      localStorage.setItem('claude-conversations', JSON.stringify(conversations));
+    }
+  }, [conversations]);
 
   const handleNewChat = () => {
     const newConversation: Conversation = {
@@ -139,7 +168,36 @@ export function ClaudeUI() {
         body: JSON.stringify({
           agent: 'general',
           prompt: content,
-          system: 'You are Claude, a helpful AI assistant created by Anthropic. You can create artifacts like code, HTML, React components, SVG graphics, and Mermaid diagrams to help users. When creating an artifact, use the format: [ARTIFACT:type:title] content [/ARTIFACT]',
+          system: `You are Claude, a helpful AI assistant created by Anthropic.
+
+You can create interactive artifacts like code, HTML pages, React components, SVG graphics, and Mermaid diagrams.
+
+When you create an artifact, wrap it in these tags:
+[ARTIFACT:type:title]
+...artifact content...
+[/ARTIFACT]
+
+Types available:
+- code: JavaScript/Python/any code
+- html: Complete HTML pages
+- react: React components (use JSX, will run with React 18)
+- svg: SVG graphics
+- mermaid: Mermaid diagrams
+
+Example:
+[ARTIFACT:react:Interactive Counter]
+function App() {
+  const [count, setCount] = React.useState(0);
+  return (
+    <div style={{ padding: '20px', textAlign: 'center' }}>
+      <h1>Count: {count}</h1>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  );
+}
+[/ARTIFACT]
+
+The artifact will appear in a panel next to the chat where users can interact with it. Use artifacts for substantial content like complete programs, visualizations, or interactive demos.`,
           maxTokens: 2000,
           temperature: 0.7,
         }),

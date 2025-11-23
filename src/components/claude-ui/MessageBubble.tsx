@@ -3,6 +3,7 @@
 import React from 'react';
 import type { Message, Artifact } from '../ClaudeUI';
 import { CodeBlock } from './CodeBlock';
+import { MarkdownContent } from './MarkdownContent';
 
 interface MessageBubbleProps {
   message: Message;
@@ -46,9 +47,13 @@ export function MessageBubble({ message, onSelectArtifact }: MessageBubbleProps)
               ? 'bg-blue-500 text-white'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
           }`}>
-            <div className="whitespace-pre-wrap break-words">
-              {message.content}
-            </div>
+            {isUser ? (
+              <div className="whitespace-pre-wrap break-words">{message.content}</div>
+            ) : (
+              <div className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-normal">
+                <MarkdownContent content={message.content} />
+              </div>
+            )}
           </div>
 
           {/* Artifact preview */}
