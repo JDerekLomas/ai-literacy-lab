@@ -12,6 +12,7 @@ interface ChatAreaProps {
   onToggleMobileMenu: () => void;
   sidebarOpen: boolean;
   onSelectArtifact: (artifact: Artifact | null) => void;
+  isLoading?: boolean;
 }
 
 export function ChatArea({
@@ -21,6 +22,7 @@ export function ChatArea({
   onToggleMobileMenu,
   sidebarOpen,
   onSelectArtifact,
+  isLoading = false,
 }: ChatAreaProps) {
   return (
     <div className="flex flex-col h-full">
@@ -70,13 +72,40 @@ export function ChatArea({
             </div>
           </div>
         ) : (
-          <MessageList messages={conversation.messages} onSelectArtifact={onSelectArtifact} />
+          <>
+            <MessageList messages={conversation.messages} onSelectArtifact={onSelectArtifact} />
+            {isLoading && (
+              <div className="max-w-3xl mx-auto w-full px-4 pb-4">
+                <div className="flex gap-4">
+                  <div className="flex-none">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="inline-block bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Claude is thinking...</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
       {/* Input */}
       <div className="flex-none border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <ChatInput onSendMessage={onSendMessage} />
+        <ChatInput onSendMessage={onSendMessage} disabled={isLoading} />
       </div>
     </div>
   );

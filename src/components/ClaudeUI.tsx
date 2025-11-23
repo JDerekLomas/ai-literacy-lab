@@ -35,6 +35,7 @@ export function ClaudeUI() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleNewChat = () => {
     const newConversation: Conversation = {
@@ -56,8 +57,20 @@ export function ClaudeUI() {
   };
 
   const handleSendMessage = async (content: string) => {
-    if (!currentConversation) {
-      handleNewChat();
+    if (isLoading) return;
+
+    let workingConversation = currentConversation;
+
+    if (!workingConversation) {
+      workingConversation = {
+        id: Date.now().toString(),
+        title: content.slice(0, 50),
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      setCurrentConversation(workingConversation);
+      setConversations(prev => [workingConversation!, ...prev]);
     }
 
     const userMessage: Message = {
@@ -67,24 +80,97 @@ export function ClaudeUI() {
       timestamp: new Date(),
     };
 
-    const updatedConversation = currentConversation || {
-      id: Date.now().toString(),
-      title: content.slice(0, 50),
-      messages: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // Add user message
+    workingConversation.messages = [...workingConversation.messages, userMessage];
+    workingConversation.updatedAt = new Date();
+    setCurrentConversation({ ...workingConversation });
+    updateConversationInList(workingConversation);
 
-    updatedConversation.messages = [...updatedConversation.messages, userMessage];
-    updatedConversation.updatedAt = new Date();
+    setIsLoading(true);
 
-    setCurrentConversation(updatedConversation);
+    try {
+      // Call Claude API
+      const response = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent: 'general',
+          prompt: content,
+          system: 'You are Claude, a helpful AI assistant created by Anthropic. You can create artifacts like code, HTML, React components, SVG graphics, and Mermaid diagrams to help users. When creating an artifact, use the format: [ARTIFACT:type:title] content [/ARTIFACT]',
+          maxTokens: 2000,
+          temperature: 0.7,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Parse artifacts from response
+      const { content: messageContent, artifact } = parseArtifacts(data.content);
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: messageContent,
+        timestamp: new Date(),
+        artifact,
+      };
+
+      // Add assistant message
+      workingConversation.messages = [...workingConversation.messages, assistantMessage];
+      workingConversation.updatedAt = new Date();
+      setCurrentConversation({ ...workingConversation });
+      updateConversationInList(workingConversation);
+
+      // Auto-open artifact if one was created
+      if (artifact) {
+        setSelectedArtifact(artifact);
+      }
+    } catch (error) {
+      console.error('Error calling Claude API:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date(),
+      };
+      workingConversation.messages = [...workingConversation.messages, errorMessage];
+      setCurrentConversation({ ...workingConversation });
+      updateConversationInList(workingConversation);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateConversationInList = (conversation: Conversation) => {
     setConversations(prev => {
-      const filtered = prev.filter(c => c.id !== updatedConversation.id);
-      return [updatedConversation, ...filtered];
+      const filtered = prev.filter(c => c.id !== conversation.id);
+      return [conversation, ...filtered];
     });
+  };
 
-    // TODO: Call API and add assistant response
+  const parseArtifacts = (content: string): { content: string; artifact?: Artifact } => {
+    const artifactRegex = /\[ARTIFACT:(code|html|react|mermaid|svg):([^\]]+)\]([\s\S]*?)\[\/ARTIFACT\]/;
+    const match = content.match(artifactRegex);
+
+    if (match) {
+      const [fullMatch, type, title, artifactContent] = match;
+      const artifact: Artifact = {
+        id: Date.now().toString(),
+        type: type as Artifact['type'],
+        title: title.trim(),
+        content: artifactContent.trim(),
+        language: type === 'code' ? 'javascript' : type,
+      };
+
+      const cleanContent = content.replace(fullMatch, `\n\n✨ Created artifact: **${title}**\n`);
+      return { content: cleanContent, artifact };
+    }
+
+    return { content };
   };
 
   return (
@@ -130,6 +216,7 @@ export function ClaudeUI() {
           onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
           sidebarOpen={sidebarOpen}
           onSelectArtifact={setSelectedArtifact}
+          isLoading={isLoading}
         />
       </div>
 

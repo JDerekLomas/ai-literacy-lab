@@ -4,9 +4,10 @@ import React, { useState, useRef, useEffect } from 'react';
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
+  disabled?: boolean;
 }
 
-export function ChatInput({ onSendMessage }: ChatInputProps) {
+export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -46,15 +47,16 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
             onKeyDown={handleKeyDown}
             placeholder="Message Claude..."
             rows={1}
-            className="flex-1 resize-none bg-transparent px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none min-h-[44px] max-h-[200px]"
+            disabled={disabled}
+            className="flex-1 resize-none bg-transparent px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none min-h-[44px] max-h-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
           />
 
           {/* Send button */}
           <button
             type="submit"
-            disabled={!input.trim()}
+            disabled={!input.trim() || disabled}
             className={`flex-none m-2 p-2 rounded-lg transition-all ${
-              input.trim()
+              input.trim() && !disabled
                 ? 'bg-blue-500 hover:bg-blue-600 text-white'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
             }`}
