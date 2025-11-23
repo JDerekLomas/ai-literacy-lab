@@ -162,6 +162,7 @@ export function ClaudeUI() {
 
     try {
       // Call Claude API
+      console.log('🚀 Sending request to /api/claude...');
       const response = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -203,10 +204,20 @@ The artifact will appear in a panel next to the chat where users can interact wi
         }),
       });
 
+      console.log('📥 Response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ HTTP Error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
       const data = await response.json();
+      console.log('📦 Response data:', data);
 
       // If API returns an error in the response
       if (data.error) {
+        console.error('❌ API Error:', data.error);
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
