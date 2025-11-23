@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './claude-ui/Sidebar';
 import { ChatArea } from './claude-ui/ChatArea';
 import { ArtifactPanel } from './claude-ui/ArtifactPanel';
+import { AchievementNotification } from './claude-ui/AchievementNotification';
+import { AchievementsPanel } from './claude-ui/AchievementsPanel';
+import { AchievementTracker } from '@/lib/achievement-tracker';
+import type { Achievement, UserProgress } from '@/lib/achievements';
 
 export interface Message {
   id: string;
@@ -36,6 +40,27 @@ export function ClaudeUI() {
   const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [achievementTracker, setAchievementTracker] = useState<AchievementTracker | null>(null);
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
+  const [pendingAchievements, setPendingAchievements] = useState<Achievement[]>([]);
+  const [showAchievementsPanel, setShowAchievementsPanel] = useState(false);
+
+  // Load progress from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('ai-literacy-progress');
+    const tracker = saved
+      ? AchievementTracker.loadProgress(saved)
+      : new AchievementTracker();
+    setAchievementTracker(tracker);
+    setUserProgress(tracker.getProgress());
+  }, []);
+
+  // Save progress to localStorage
+  useEffect(() => {
+    if (achievementTracker) {
+      localStorage.setItem('ai-literacy-progress', achievementTracker.saveProgress());
+    }
+  }, [userProgress]);
 
   const handleNewChat = () => {
     const newConversation: Conversation = {
@@ -49,6 +74,15 @@ export function ClaudeUI() {
     setCurrentConversation(newConversation);
     setSelectedArtifact(null);
     setMobileMenuOpen(false);
+
+    // Track new conversation achievement
+    if (achievementTracker) {
+      const newAchievements = achievementTracker.trackNewConversation();
+      if (newAchievements.length > 0) {
+        setPendingAchievements(prev => [...prev, ...newAchievements]);
+        setUserProgress(achievementTracker.getProgress());
+      }
+    }
   };
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -85,6 +119,15 @@ export function ClaudeUI() {
     workingConversation.updatedAt = new Date();
     setCurrentConversation({ ...workingConversation });
     updateConversationInList(workingConversation);
+
+    // Track user message achievements
+    if (achievementTracker) {
+      const newAchievements = achievementTracker.trackMessage(userMessage, workingConversation);
+      if (newAchievements.length > 0) {
+        setPendingAchievements(prev => [...prev, ...newAchievements]);
+        setUserProgress(achievementTracker.getProgress());
+      }
+    }
 
     setIsLoading(true);
 
@@ -124,6 +167,15 @@ export function ClaudeUI() {
       workingConversation.updatedAt = new Date();
       setCurrentConversation({ ...workingConversation });
       updateConversationInList(workingConversation);
+
+      // Track assistant message achievements (especially artifacts)
+      if (achievementTracker) {
+        const newAchievements = achievementTracker.trackMessage(assistantMessage, workingConversation);
+        if (newAchievements.length > 0) {
+          setPendingAchievements(prev => [...prev, ...newAchievements]);
+          setUserProgress(achievementTracker.getProgress());
+        }
+      }
 
       // Auto-open artifact if one was created
       if (artifact) {
@@ -173,8 +225,27 @@ export function ClaudeUI() {
     return { content };
   };
 
+  const dismissAchievement = () => {
+    setPendingAchievements(prev => prev.slice(1));
+  };
+
   return (
     <div className="flex h-screen bg-white dark:bg-gray-900 overflow-hidden">
+      {/* Achievement Notifications */}
+      {pendingAchievements.length > 0 && (
+        <AchievementNotification
+          achievement={pendingAchievements[0]}
+          onDismiss={dismissAchievement}
+        />
+      )}
+
+      {/* Achievements Panel */}
+      {showAchievementsPanel && userProgress && (
+        <AchievementsPanel
+          progress={userProgress}
+          onClose={() => setShowAchievementsPanel(false)}
+        />
+      )}
       {/* Sidebar - Desktop */}
       <div className={`hidden md:block transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-0'}`}>
         <Sidebar
@@ -184,6 +255,8 @@ export function ClaudeUI() {
           onNewChat={handleNewChat}
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
+          userProgress={userProgress}
+          onShowAchievements={() => setShowAchievementsPanel(true)}
         />
       </div>
 
@@ -202,6 +275,11 @@ export function ClaudeUI() {
               onNewChat={handleNewChat}
               isOpen={true}
               onToggle={() => setMobileMenuOpen(false)}
+              userProgress={userProgress}
+              onShowAchievements={() => {
+                setMobileMenuOpen(false);
+                setShowAchievementsPanel(true);
+              }}
             />
           </div>
         </div>

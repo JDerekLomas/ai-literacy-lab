@@ -2,6 +2,8 @@
 
 import React from 'react';
 import type { Conversation } from '../ClaudeUI';
+import type { UserProgress } from '@/lib/achievements';
+import { AchievementProgress } from './AchievementProgress';
 
 interface SidebarProps {
   conversations: Conversation[];
@@ -10,6 +12,8 @@ interface SidebarProps {
   onNewChat: () => void;
   isOpen: boolean;
   onToggle: () => void;
+  userProgress: UserProgress | null;
+  onShowAchievements: () => void;
 }
 
 export function Sidebar({
@@ -19,6 +23,8 @@ export function Sidebar({
   onNewChat,
   isOpen,
   onToggle,
+  userProgress,
+  onShowAchievements,
 }: SidebarProps) {
   if (!isOpen) return null;
 
@@ -66,9 +72,19 @@ export function Sidebar({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-        <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-          Claude UI Recreation
+      <div className="border-t border-gray-200 dark:border-gray-700">
+        {userProgress && (
+          <div className="p-2">
+            <AchievementProgress
+              progress={userProgress}
+              onClick={onShowAchievements}
+            />
+          </div>
+        )}
+        <div className="p-3">
+          <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+            AI Literacy Lab
+          </div>
         </div>
       </div>
     </div>
