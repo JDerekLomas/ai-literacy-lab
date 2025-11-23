@@ -15,12 +15,13 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
       remarkPlugins={[remarkGfm]}
       components={{
         // Code blocks
-        code({ node, inline, className, children, ...props }) {
+        code({ className, children, ...props }: any) {
           const match = /language-(\w+)/.exec(className || '');
           const language = match ? match[1] : '';
           const codeString = String(children).replace(/\n$/, '');
+          const isInline = !className;
 
-          if (!inline && language) {
+          if (!isInline && language) {
             return <CodeBlock code={codeString} language={language} />;
           }
 
