@@ -205,8 +205,19 @@ The artifact will appear in a panel next to the chat where users can interact wi
 
       const data = await response.json();
 
+      // If API returns an error in the response
       if (data.error) {
-        throw new Error(data.error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.content || `Error: ${data.error}`,
+          timestamp: new Date(),
+        };
+        workingConversation.messages = [...workingConversation.messages, errorMessage];
+        setCurrentConversation({ ...workingConversation });
+        updateConversationInList(workingConversation);
+        setIsLoading(false);
+        return;
       }
 
       // Parse artifacts from response
@@ -244,7 +255,12 @@ The artifact will appear in a panel next to the chat where users can interact wi
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: `⚠️ Error: ${error instanceof Error ? error.message : 'Failed to connect to API'}
+
+Please check:
+- Is the ANTHROPIC_API_KEY set in Vercel environment variables?
+- Is the API endpoint accessible?
+- Check browser console for details.`,
         timestamp: new Date(),
       };
       workingConversation.messages = [...workingConversation.messages, errorMessage];
