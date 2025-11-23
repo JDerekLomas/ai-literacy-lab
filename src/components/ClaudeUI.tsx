@@ -6,6 +6,7 @@ import { ChatArea } from './claude-ui/ChatArea';
 import { ArtifactPanel } from './claude-ui/ArtifactPanel';
 import { AchievementNotification } from './claude-ui/AchievementNotification';
 import { AchievementsPanel } from './claude-ui/AchievementsPanel';
+import { ApiStatusBanner } from './claude-ui/ApiStatusBanner';
 import { AchievementTracker } from '@/lib/achievement-tracker';
 import type { Achievement, UserProgress } from '@/lib/achievements';
 
@@ -315,7 +316,10 @@ Please check:
   };
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="flex flex-col h-screen bg-white dark:bg-gray-900 overflow-hidden">
+      {/* API Status Banner */}
+      <ApiStatusBanner />
+
       {/* Achievement Notifications */}
       {pendingAchievements.length > 0 && (
         <AchievementNotification
@@ -331,6 +335,8 @@ Please check:
           onClose={() => setShowAchievementsPanel(false)}
         />
       )}
+
+      <div className="flex flex-1 min-h-0">
       {/* Sidebar - Desktop */}
       <div className={`hidden md:block transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-0'}`}>
         <Sidebar
@@ -402,6 +408,7 @@ Please check:
           />
         </div>
       )}
+      </div>
     </div>
   );
 }
